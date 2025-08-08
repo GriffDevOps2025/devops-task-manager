@@ -1,42 +1,39 @@
-name: Build Docker Stack
+
+name: Build and Push to ECR
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:13
-        env:
-          POSTGRES_DB: taskdb
-          POSTGRES_USER: devuser
-          POSTGRES_PASSWORD: devpass
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
 
-      - name: Build backend Docker image
-        run: |
-          cd backend
-          docker build -t devops-backend .
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build frontend Docker image
-        run: |
-          cd frontend
-          docker build -t devops-frontend .
+    - name: Build and push backend image
+      run: |
+        cd backend
+        docker build -t devops-backend .
+        docker tag devops-backend:latest 746669200695.dkr.ecr.us-east-1.amazonaws.com/devops-backend:latest
+        docker push 746669200695.dkr.ecr.us-east-1.amazonaws.com/devops-backend:latest
+
+    - name: Build and push frontend image
+      run: |
+        cd ../frontend
+        docker build -t devops-frontend .
+        docker tag devops-frontend:latest 746669200695.dkr.ecr.us-east-1.amazonaws.com/devops-frontend:latest
+        docker push 746669200695.dkr.ecr.us-east-1.amazonaws.com/devops-frontend:latest
