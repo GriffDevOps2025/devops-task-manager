@@ -33,3 +33,4 @@ jobs:
           docker build -t devops-frontend ./frontend
           docker tag devops-frontend:latest 746669200695.dkr.ecr.us-east-1.amazonaws.com/devops-frontend:latest
           docker push 746669200695.dkr.ecr.us-east-1.amazonaws.com/devops-frontend:latest
+
